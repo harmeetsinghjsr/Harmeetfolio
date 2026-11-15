@@ -48,7 +48,8 @@ let lenis: Lenis | null = null;
 function scrollTo(id: string) {
   const el = document.getElementById(id);
   if (!el) return;
-  if (lenis) lenis.scrollTo(el, { offset: -72 });
+  // Lenis already honours the section's scroll-margin-top (6rem) from styles.css.
+  if (lenis) lenis.scrollTo(el);
   else
     window.scrollTo({
       top: el.getBoundingClientRect().top + window.scrollY - 72,
