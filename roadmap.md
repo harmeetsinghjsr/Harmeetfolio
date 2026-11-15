@@ -1,0 +1,2 @@
+- [x] Final polish (cursor, magnetic, decode, spotlight, sweep, mobile, a11y, terminal)
+- [x] Remove sound start page
