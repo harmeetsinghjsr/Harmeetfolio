@@ -22,8 +22,8 @@ export function SoundToggle() {
 
 const TRANSCRIPT = "Hi, I'm Harmeet, a software developer from Jamshedpur. I build full-stack apps, AI features, and automation that keeps running after I log off. Fun fact: this voice was generated with Resonance, the AI voice platform I deploy and run. Have a look around, and say hi.";
 const SENTENCES = TRANSCRIPT.match(/[^.!?]+[.!?]+/g)!.map((s) => s.trim());
-// Optional: drop public/intro.mp3 to enable the "Hear my intro" button.
-const EXTS = ["mp3"];
+// Optional: drop public/intro.mp3 or intro.wav to enable the "Hear my intro" button.
+const EXTS = ["mp3", "wav"];
 
 export function IntroButton() {
   const [src, setSrc] = useState<string | null>(null);
