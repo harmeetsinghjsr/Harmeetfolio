@@ -1,113 +1,68 @@
-// Web Audio engine: ambient drone + intro voice, all routed through one analyser.
+// Single shared intro-voice player. The nav toggle and the hero "Hear my intro"
+// button both control this one <audio>, so they always stay in sync.
 import { useEffect, useState } from "react";
 
-const KEY = "sound-on";
-const DRONE_DB = -24;
-const FADE = 1.5;
+// Drop public/intro.mp3 or public/intro.wav to enable the intro.
+const EXTS = ["mp3", "wav"];
 
-let ctx: AudioContext | null = null;
-let analyser: AnalyserNode | null = null;
-let droneGain: GainNode | null = null;
-let data: Uint8Array<ArrayBuffer> | null = null;
-let level = 0;
-let on = false;
-const subs = new Set<(v: boolean) => void>();
-const levelSubs = new Set<(v: number) => void>();
+let el: HTMLAudioElement | null = null;
+let probe: Promise<HTMLAudioElement | null> | null = null;
+let playing = false;
+let progress = 0; // 0..1
+const subs = new Set<() => void>();
+const emit = () => subs.forEach((f) => f());
 
-function ensure() {
-  if (ctx) return ctx;
-  ctx = new AudioContext();
-  analyser = ctx.createAnalyser();
-  analyser.fftSize = 256;
-  analyser.smoothingTimeConstant = 0.8;
-  data = new Uint8Array(analyser.frequencyBinCount);
-  analyser.connect(ctx.destination);
+/** Finds the intro file once (client only) and builds the audio element. */
+export function loadIntro(): Promise<HTMLAudioElement | null> {
+  if (typeof window === "undefined") return Promise.resolve(null);
+  probe ??= (async () => {
+    for (const ext of EXTS) {
+      const url = `${import.meta.env.BASE_URL}intro.${ext}`;
+      try {
+        const r = await fetch(url, { method: "HEAD" });
+        if (!r.ok || !(r.headers.get("content-type") ?? "").startsWith("audio")) continue;
+        const a = new Audio(url);
+        a.preload = "auto";
+        a.addEventListener("play", () => { playing = true; emit(); });
+        a.addEventListener("pause", () => { playing = false; emit(); });
+        a.addEventListener("ended", () => { playing = false; progress = 0; emit(); });
+        a.addEventListener("timeupdate", () => {
+          progress = a.duration ? a.currentTime / a.duration : 0;
+          emit();
+        });
+        el = a;
+        emit();
+        return a;
+      } catch {
+        /* try next format */
+      }
+    }
+    return null;
+  })();
+  return probe;
+}
 
-  droneGain = ctx.createGain();
-  droneGain.gain.value = 0;
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.value = 420;
-  filter.Q.value = 6;
-  const lfo = ctx.createOscillator();
-  lfo.frequency.value = 0.07;
-  const lfoAmt = ctx.createGain();
-  lfoAmt.gain.value = 260;
-  lfo.connect(lfoAmt).connect(filter.frequency);
-  for (const [f, type] of [[55, "sawtooth"], [55.6, "triangle"]] as const) {
-    const o = ctx.createOscillator();
-    o.type = type;
-    o.frequency.value = f;
-    o.connect(filter);
-    o.start();
+/** Play or pause the intro. Must be called from a user gesture. */
+export function toggleIntro() {
+  const a = el;
+  if (!a) return;
+  if (playing) {
+    a.pause();
+    return;
   }
-  lfo.start();
-  filter.connect(droneGain).connect(analyser);
-  return ctx;
+  if (a.ended) a.currentTime = 0;
+  a.play().catch(() => { playing = false; emit(); });
 }
 
-function fadeTo(v: number) {
-  if (!ctx || !droneGain) return;
-  const t = ctx.currentTime, g = droneGain.gain;
-  g.cancelScheduledValues(t);
-  g.setValueAtTime(g.value, t);
-  g.linearRampToValueAtTime(v, t + FADE);
-}
-
-export function isSoundOn() { return on; }
-export function savedPreference() {
-  try { return localStorage.getItem(KEY) === "1"; } catch { return false; }
-}
-export function subscribeSound(fn: (v: boolean) => void) { subs.add(fn); return () => { subs.delete(fn); }; }
-
-/** Must be called from a user gesture. */
-export function setSound(v: boolean) {
-  on = v;
-  try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /* ignore */ }
-  if (v) { const c = ensure(); void c.resume(); fadeTo(Math.pow(10, DRONE_DB / 20)); }
-  else fadeTo(0);
-  subs.forEach((f) => f(v));
-}
-
-/** Smoothed low-frequency energy, 0..1. Call once per frame or via useAudioLevel. */
-export function audioLevel() {
-  if (!analyser || !data) return (level *= 0.9);
-  analyser.getByteFrequencyData(data);
-  let s = 0;
-  for (let i = 1; i < 10; i++) s += data[i]!;
-  const target = Math.min(1, (s / 9 / 255) * 1.6);
-  level += (target - level) * 0.2;
-  if (on) levelSubs.forEach((f) => f(level));
-  return level;
-}
-
-/** React hook: returns { level, on } — re-renders on audio level changes. */
-export function useAudioLevel() {
-  const [l, setL] = useState(level);
-  const [, setOn] = useState(on);
+/** React hook: { available, playing, progress } for the intro audio. */
+export function useIntro() {
+  const [, tick] = useState(0);
   useEffect(() => {
-    return subs.add(setOn);
+    const f = () => tick((n) => n + 1);
+    subs.add(f);
+    void loadIntro();
+    f();
+    return () => { subs.delete(f); };
   }, []);
-  useEffect(() => {
-    const id = setInterval(() => setL(level), 16);
-    return () => clearInterval(id);
-  }, []);
-  return { level: l, on };
+  return { available: el !== null, playing, progress };
 }
-
-/** Routes an <audio> element through the analyser (once per element). */
-const routed = new WeakSet<HTMLMediaElement>();
-export function routeMedia(el: HTMLMediaElement) {
-  try {
-    const c = ensure();
-    void c.resume();
-    if (routed.has(el)) return;
-    routed.add(el);
-    c.createMediaElementSource(el).connect(analyser!);
-  } catch {
-    // Routing is only for the visual level meter. If it fails (e.g. the element
-    // was already connected before a hot reload), the audio still plays normally.
-  }
-}
-
-
