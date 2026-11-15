@@ -1,5 +1,14 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist/client",
-  "rewrites": [{ "source": "/((?!assets/|favicon.ico|resume.pdf|robots.txt).*)", "destination": "/_shell.html" }]
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "frame-ancestors 'none'" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    }
+  ],
+  "rewrites": [{ "source": "/((?!assets/|favicon.ico|resume.pdf|harmeet.jpg|robots.txt).*)", "destination": "/_shell.html" }]
 }

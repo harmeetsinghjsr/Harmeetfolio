@@ -83,7 +83,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
           "img-src 'self' data: https://*.vercel.app https://*.netlify.app; " +
           "font-src 'self' https://fonts.gstatic.com; " +
-          "object-src 'none'; frame-ancestors 'none'",
+          "object-src 'none'",
       },
       { title: "Harmeet Singh — Software Developer" },
       { name: "author", content: "Harmeet Singh" },
