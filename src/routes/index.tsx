@@ -481,22 +481,30 @@ function Work() {
 
       <Reveal className="mt-16">
         <div className="systems-archive-head">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Archive / additional systems
+          <div className="systems-archive-copy">
+            <p className="systems-archive-kicker">
+              Archive / {archive.length + alsoBuilt.length} more systems
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <h3 className="systems-archive-heading">Plus everything else I've built</h3>
+            <p className="systems-archive-lede">
               Experiments, dashboards, hardware, and prototypes.
             </p>
+            {!showArchive && (
+              <ul className="systems-archive-chips" aria-label="Archived projects">
+                {[...archive, ...alsoBuilt].map((item) => (
+                  <li key={item.title} className="systems-archive-chip">
+                    {item.title}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <button
             className="systems-archive-toggle"
             onClick={() => setShowArchive((value) => !value)}
             aria-expanded={showArchive}
           >
-            {showArchive
-              ? "Collapse archive"
-              : `Open archive · ${archive.length + alsoBuilt.length} items`}{" "}
+            {showArchive ? "Collapse archive" : "Open archive"}{" "}
             <span aria-hidden>{showArchive ? "↑" : "↓"}</span>
           </button>
         </div>
