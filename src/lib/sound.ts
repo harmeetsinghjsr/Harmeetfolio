@@ -98,11 +98,16 @@ export function useAudioLevel() {
 /** Routes an <audio> element through the analyser (once per element). */
 const routed = new WeakSet<HTMLMediaElement>();
 export function routeMedia(el: HTMLMediaElement) {
-  const c = ensure();
-  void c.resume();
-  if (routed.has(el)) return;
-  routed.add(el);
-  c.createMediaElementSource(el).connect(analyser!);
+  try {
+    const c = ensure();
+    void c.resume();
+    if (routed.has(el)) return;
+    routed.add(el);
+    c.createMediaElementSource(el).connect(analyser!);
+  } catch {
+    // Routing is only for the visual level meter. If it fails (e.g. the element
+    // was already connected before a hot reload), the audio still plays normally.
+  }
 }
 
 

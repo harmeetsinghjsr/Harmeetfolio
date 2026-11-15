@@ -60,7 +60,7 @@ export function IntroButton() {
     if (playing) { a.pause(); return; }
     routeMedia(a);
     a.currentTime = a.ended ? 0 : a.currentTime;
-    void a.play();
+    a.play().catch(() => setPlaying(false));
   };
 
   return (
