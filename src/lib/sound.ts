@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 // Drop public/intro.mp3 or public/intro.wav to enable the intro.
-const EXTS = ["mp3", "wav"];
+const EXTS = ["wav", "mp3"];
 
 let el: HTMLAudioElement | null = null;
 let probe: Promise<HTMLAudioElement | null> | null = null;

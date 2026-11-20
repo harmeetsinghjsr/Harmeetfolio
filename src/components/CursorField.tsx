@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useReduced } from "@/lib/motion";
+import { isTouchDevice } from "@/lib/device";
 
 type Point = { x: number; y: number };
 type Particle = {
@@ -32,7 +33,7 @@ export function CursorField() {
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
-    setEnabled(!reduced && window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+    setEnabled(!reduced);
   }, [reduced]);
 
   useEffect(() => {
@@ -47,6 +48,10 @@ export function CursorField() {
     let raf = 0;
     let last = performance.now();
     let pointerSeen = false;
+    const touch = isTouchDevice();
+    let lastInput = 0;
+    let lastScroll = window.scrollY;
+    let scrollKick = 0;
     const pointer = { x: width * 0.72, y: height * 0.42 };
     const particles = Array.from({ length: width < 900 ? 42 : 78 }, (_, index) =>
       createParticle(width, height, index),
@@ -67,6 +72,22 @@ export function CursorField() {
       pointer.x = event.clientX;
       pointer.y = event.clientY;
       pointerSeen = true;
+      lastInput = performance.now();
+    };
+    // Touch: the swarm follows the finger, then relaxes once it lifts.
+    const onTouch = (event: TouchEvent) => {
+      const t = event.touches[0];
+      if (!t) return;
+      pointer.x = t.clientX;
+      pointer.y = t.clientY;
+      pointerSeen = true;
+      lastInput = performance.now();
+    };
+    // Scrolling streams the particles past like a starfield.
+    const onScroll = () => {
+      const y = window.scrollY;
+      scrollKick += Math.max(-40, Math.min(40, y - lastScroll));
+      lastScroll = y;
     };
     const drawTrail = (particle: Particle) => {
       if (particle.trail.length < 2) return;
@@ -89,7 +110,14 @@ export function CursorField() {
       const delta = Math.min((now - last) / 16.67, 2);
       last = now;
       context.clearRect(0, 0, width, height);
-      const influence = pointerSeen ? 1 : 0.2;
+      const sinceInput = now - lastInput;
+      const influence = !pointerSeen
+        ? 0.2
+        : touch
+          ? Math.max(0.2, 1 - sinceInput / 1600)
+          : 1;
+      const kick = scrollKick * 0.018 * delta;
+      scrollKick *= 0.86;
 
       for (const particle of particles) {
         const dx = pointer.x - particle.x;
@@ -99,6 +127,7 @@ export function CursorField() {
         const swirl = Math.min(0.09, 6 / distance) * influence * delta;
         particle.vx += (dx / distance) * pull - (dy / distance) * swirl;
         particle.vy += (dy / distance) * pull + (dx / distance) * swirl;
+        particle.vy -= kick * (0.6 + particle.size * 0.4);
         particle.vx *= 0.985;
         particle.vy *= 0.985;
         particle.x += particle.vx * delta;
@@ -120,7 +149,7 @@ export function CursorField() {
         context.fill();
       }
 
-      if (pointerSeen) {
+      if (pointerSeen && influence > 0.25) {
         const halo = context.createRadialGradient(
           pointer.x,
           pointer.y,
@@ -129,7 +158,7 @@ export function CursorField() {
           pointer.y,
           92,
         );
-        halo.addColorStop(0, "rgba(141, 232, 211, 0.08)");
+        halo.addColorStop(0, `rgba(141, 232, 211, ${(touch ? 0.14 : 0.08) * influence})`);
         halo.addColorStop(1, "rgba(141, 232, 211, 0)");
         context.fillStyle = halo;
         context.beginPath();
@@ -142,11 +171,17 @@ export function CursorField() {
     resize();
     window.addEventListener("resize", resize, { passive: true });
     window.addEventListener("pointermove", move, { passive: true });
+    window.addEventListener("touchstart", onTouch, { passive: true });
+    window.addEventListener("touchmove", onTouch, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     raf = requestAnimationFrame(draw);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", move);
+      window.removeEventListener("touchstart", onTouch);
+      window.removeEventListener("touchmove", onTouch);
+      window.removeEventListener("scroll", onScroll);
     };
   }, [enabled]);
 

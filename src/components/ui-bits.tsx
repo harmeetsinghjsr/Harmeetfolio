@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useReduced } from "@/lib/motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { isTouchDevice, onScrollFrame } from "@/lib/device";
 
 export function Reveal({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   const reduce = useReduced();
@@ -27,6 +28,22 @@ export function Tilt({ children, className, ...rest }: { children: ReactNode; cl
   const [enabled, setEnabled] = useState(false);
   const reduced = useReduced();
   useEffect(() => { setEnabled(!reduced); }, [reduced]);
+  // Touch screens have no hover, so the card tilts and catches light as it scrolls past.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || reduced || !isTouchDevice()) return;
+    return onScrollFrame(() => {
+      const r = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      if (r.bottom < 0 || r.top > vh) return;
+      const p = (r.top + r.height / 2) / vh; // 0 = top of screen, 1 = bottom
+      const k = Math.max(-1, Math.min(1, (p - 0.5) * 2));
+      el.style.transform = `perspective(900px) rotateX(${(k * 7).toFixed(2)}deg) scale(${(1 - Math.abs(k) * 0.03).toFixed(3)})`;
+      el.style.setProperty("--gx", `${(30 + (1 - p) * 40).toFixed(1)}%`);
+      el.style.setProperty("--gy", `${((1 - p) * 100).toFixed(1)}%`);
+      el.style.setProperty("--go", (Math.max(0, 1 - Math.abs(k) * 1.4) * 0.85).toFixed(2));
+    });
+  }, [reduced]);
   const onMove = (e: React.PointerEvent) => {
     const el = ref.current;
     if (!el || !enabled) return;
@@ -44,7 +61,7 @@ export function Tilt({ children, className, ...rest }: { children: ReactNode; cl
     el.style.setProperty("--go", "0");
   };
   return (
-    <div ref={ref} onPointerMove={onMove} onPointerDown={onMove} onPointerLeave={onLeave} onPointerUp={(e) => e.pointerType !== "mouse" && setTimeout(onLeave, 700)} {...rest} className={cn("relative transition-transform duration-300 ease-out will-change-transform", className)}>
+    <div ref={ref} onPointerMove={(e) => e.pointerType === "mouse" && onMove(e)} onPointerLeave={(e) => e.pointerType === "mouse" && onLeave()} {...rest} className={cn("relative transition-transform duration-300 ease-out will-change-transform", className)}>
       {children}
       <div aria-hidden className="pointer-events-none absolute inset-0 rounded-[inherit] transition-opacity duration-300" style={{ opacity: "var(--go, 0)", background: "radial-gradient(420px circle at var(--gx) var(--gy), color-mix(in oklab, var(--primary) 18%, transparent), transparent 60%)" }} />
     </div>

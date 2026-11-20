@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useReduced } from "@/lib/motion";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { isTouchDevice, onScrollFrame } from "@/lib/device";
 import { cn } from "@/lib/utils";
 
 // The photo itself carries the motion: it breathes slowly, tips toward the cursor,
@@ -10,6 +11,24 @@ export default function Portrait({ src, className }: { src: string; className?: 
   const wrap = useRef<HTMLDivElement>(null);
   const reduce = useReduced();
   const [imageFailed, setImageFailed] = useState(false);
+
+  // Touch screens: the photo drifts and tips with scroll instead of the cursor.
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el || reduce || !isTouchDevice()) return;
+    return onScrollFrame(() => {
+      const r = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      if (r.bottom < 0 || r.top > vh) return;
+      const k = Math.max(-1, Math.min(1, ((r.top + r.height / 2) / vh - 0.5) * 2));
+      el.style.setProperty("--py", `${(k * 10).toFixed(1)}px`);
+      el.style.setProperty("--rx", `${(k * -5).toFixed(2)}deg`);
+      el.style.setProperty("--ry", `${(k * 3).toFixed(2)}deg`);
+      (el.parentElement ?? el).style.setProperty("--gx", `${(50 + k * 25).toFixed(1)}%`);
+      (el.parentElement ?? el).style.setProperty("--gy", `${(50 - k * 40).toFixed(1)}%`);
+      (el.parentElement ?? el).style.setProperty("--go", (Math.max(0, 1 - Math.abs(k) * 1.3) * 0.7).toFixed(2));
+    });
+  }, [reduce]);
 
   const onMove = (e: React.PointerEvent) => {
     const el = wrap.current;
@@ -21,15 +40,16 @@ export default function Portrait({ src, className }: { src: string; className?: 
     el.style.setProperty("--py", `${(y - 0.5) * -16}px`);
     el.style.setProperty("--rx", `${(0.5 - y) * 7}deg`);
     el.style.setProperty("--ry", `${(x - 0.5) * 7}deg`);
-    el.style.setProperty("--gx", `${x * 100}%`);
-    el.style.setProperty("--gy", `${y * 100}%`);
-    el.style.setProperty("--go", "1");
+    (el.parentElement ?? el).style.setProperty("--gx", `${x * 100}%`);
+    (el.parentElement ?? el).style.setProperty("--gy", `${y * 100}%`);
+    (el.parentElement ?? el).style.setProperty("--go", "1");
   };
 
   const onLeave = () => {
     const el = wrap.current;
     if (!el) return;
-    for (const v of ["--px", "--py", "--rx", "--ry", "--go"]) el.style.setProperty(v, "0");
+    for (const v of ["--px", "--py", "--rx", "--ry"]) el.style.setProperty(v, "0");
+    (el.parentElement ?? el).style.setProperty("--go", "0");
   };
 
   return (
@@ -45,9 +65,8 @@ export default function Portrait({ src, className }: { src: string; className?: 
     >
       <div
         ref={wrap}
-        onPointerMove={onMove}
-        onPointerLeave={onLeave}
-        onPointerUp={(e) => e.pointerType !== "mouse" && setTimeout(onLeave, 900)}
+        onPointerMove={(e) => e.pointerType === "mouse" && onMove(e)}
+        onPointerLeave={(e) => e.pointerType === "mouse" && onLeave()}
         className="absolute inset-0 overflow-hidden rounded-[24px]"
         style={{
           transform:

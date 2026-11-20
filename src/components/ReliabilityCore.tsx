@@ -3,6 +3,7 @@ import { Line } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useReduced } from "@/lib/motion";
+import { isTouchDevice } from "@/lib/device";
 
 const nodes = [
   { label: "AI", color: "#8de8d3", position: [-2.25, 0.85, 0.15] as [number, number, number] },
@@ -15,15 +16,35 @@ function PointerRig({ active }: { active: boolean }) {
   const group = useRef<THREE.Group>(null);
   const reduced = useReduced();
   const pointer = useRef({ x: 0, y: 0 });
+  const touch = useRef(false);
+  const gyro = useRef(false);
+  const scroll = useRef(0);
 
   useEffect(() => {
     if (reduced || !active) return;
+    touch.current = isTouchDevice();
     const onMove = (event: PointerEvent) => {
       pointer.current.x = (event.clientX / window.innerWidth) * 2 - 1;
       pointer.current.y = (event.clientY / window.innerHeight) * 2 - 1;
     };
+    // Phones: tilt the core with the device (no permission prompt on Android).
+    const onTilt = (event: DeviceOrientationEvent) => {
+      if (event.gamma == null || event.beta == null) return;
+      gyro.current = true;
+      pointer.current.x = Math.max(-1, Math.min(1, event.gamma / 25));
+      pointer.current.y = Math.max(-1, Math.min(1, (event.beta - 45) / 25));
+    };
+    const onScroll = () => {
+      scroll.current = window.scrollY / Math.max(1, window.innerHeight);
+    };
     window.addEventListener("pointermove", onMove, { passive: true });
-    return () => window.removeEventListener("pointermove", onMove);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    if (touch.current) window.addEventListener("deviceorientation", onTilt, { passive: true });
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("deviceorientation", onTilt);
+    };
   }, [active, reduced]);
 
   const connectors = useMemo(
@@ -33,12 +54,18 @@ function PointerRig({ active }: { active: boolean }) {
 
   useFrame((state, delta) => {
     if (!group.current || reduced || !active) return;
-    const targetX = pointer.current.y * 0.16;
-    const targetY = pointer.current.x * 0.22;
+    const t = state.clock.elapsedTime;
+    // Without a mouse or gyro, keep the core alive with a slow figure-eight sway.
+    const idle = touch.current && !gyro.current;
+    const px = idle ? Math.sin(t * 0.55) * 0.9 : pointer.current.x;
+    const py = idle ? Math.sin(t * 0.37) * 0.7 : pointer.current.y;
+    const gain = touch.current ? 1.8 : 1;
+    const targetX = py * 0.16 * gain + scroll.current * 0.35;
+    const targetY = px * 0.22 * gain + scroll.current * 0.9;
     group.current.rotation.x += (targetX - group.current.rotation.x) * Math.min(1, delta * 3);
     group.current.rotation.y += (targetY - group.current.rotation.y) * Math.min(1, delta * 3);
     group.current.rotation.z += delta * 0.045;
-    group.current.position.y = Math.sin(state.clock.elapsedTime * 0.8) * 0.08;
+    group.current.position.y = Math.sin(t * 0.8) * 0.08;
   });
 
   return (

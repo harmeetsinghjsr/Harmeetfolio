@@ -22,6 +22,7 @@ import { Cursor, DecodeText, Terminal } from "@/components/Polish";
 import { CursorField } from "@/components/CursorField";
 import { HeroUI } from "@/components/HeroUI";
 import { useReduced, setReduced } from "@/lib/motion";
+import { canRunHeavyScene } from "@/lib/device";
 
 const ReliabilityCore = lazy(() => import("@/components/ReliabilityCore"));
 import { ReliabilityCoreFallback } from "@/components/ReliabilityCoreFallback";
@@ -152,7 +153,7 @@ function Nav() {
           aria-label={`${profile.name}, return to top`}
         >
           <span className="mission-brand-mark" aria-hidden>
-            HS
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" width={40} height={40} />
           </span>
           <span className="mission-brand-copy">
             <span className="mission-brand-name">{profile.name}</span>
@@ -274,8 +275,8 @@ function Hero() {
   const [gl, setGl] = useState(false);
   const reduced = useReduced();
   useEffect(() => {
-    const lowPower = window.matchMedia("(max-width: 767px), (pointer: coarse)").matches;
-    setGl(!reduced && !lowPower && hasWebGL());
+    // Phones get the real 3D core too, unless the device is low-end or on data saver.
+    setGl(!reduced && canRunHeavyScene() && hasWebGL());
   }, [reduced]);
 
   return (
