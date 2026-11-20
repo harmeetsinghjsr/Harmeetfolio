@@ -50,8 +50,6 @@ export function CursorField() {
     let pointerSeen = false;
     const touch = isTouchDevice();
     let lastInput = 0;
-    let lastScroll = window.scrollY;
-    let scrollKick = 0;
     const pointer = { x: width * 0.72, y: height * 0.42 };
     const particles = Array.from({ length: width < 900 ? 42 : 78 }, (_, index) =>
       createParticle(width, height, index),
@@ -83,12 +81,6 @@ export function CursorField() {
       pointerSeen = true;
       lastInput = performance.now();
     };
-    // Scrolling streams the particles past like a starfield.
-    const onScroll = () => {
-      const y = window.scrollY;
-      scrollKick += Math.max(-40, Math.min(40, y - lastScroll));
-      lastScroll = y;
-    };
     const drawTrail = (particle: Particle) => {
       if (particle.trail.length < 2) return;
       context.lineWidth = particle.size * 0.7;
@@ -116,8 +108,6 @@ export function CursorField() {
         : touch
           ? Math.max(0.2, 1 - sinceInput / 1600)
           : 1;
-      const kick = scrollKick * 0.018 * delta;
-      scrollKick *= 0.86;
 
       for (const particle of particles) {
         const dx = pointer.x - particle.x;
@@ -127,7 +117,6 @@ export function CursorField() {
         const swirl = Math.min(0.09, 6 / distance) * influence * delta;
         particle.vx += (dx / distance) * pull - (dy / distance) * swirl;
         particle.vy += (dy / distance) * pull + (dx / distance) * swirl;
-        particle.vy -= kick * (0.6 + particle.size * 0.4);
         particle.vx *= 0.985;
         particle.vy *= 0.985;
         particle.x += particle.vx * delta;
@@ -173,7 +162,6 @@ export function CursorField() {
     window.addEventListener("pointermove", move, { passive: true });
     window.addEventListener("touchstart", onTouch, { passive: true });
     window.addEventListener("touchmove", onTouch, { passive: true });
-    window.addEventListener("scroll", onScroll, { passive: true });
     raf = requestAnimationFrame(draw);
     return () => {
       cancelAnimationFrame(raf);
@@ -181,7 +169,6 @@ export function CursorField() {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("touchstart", onTouch);
       window.removeEventListener("touchmove", onTouch);
-      window.removeEventListener("scroll", onScroll);
     };
   }, [enabled]);
 
