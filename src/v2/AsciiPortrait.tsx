@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-// Your astronaut logo, re-drawn every frame as coloured code glyphs.
+// A picture (your portrait), re-drawn every frame as coloured code glyphs.
 // Glyphs scatter away from the pointer (or finger), scramble while disturbed,
 // and dissolve upward as the hero scrolls out of view.
 
@@ -21,7 +21,7 @@ type Cell = {
   seed: number;
 };
 
-export function AsciiAstronaut({ src, reduced }: { src: string; reduced: boolean }) {
+export function AsciiPortrait({ src, reduced }: { src: string; reduced: boolean }) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
 
@@ -35,7 +35,9 @@ export function AsciiAstronaut({ src, reduced }: { src: string; reduced: boolean
     let cells: Cell[] = [];
     let palette: string[] = [];
     let byBucket: Cell[][] = [];
-    let size = 0;
+    let size = 0; // drawing height; also the scale for interaction radii
+    let W = 0;
+    let H = 0;
     let cellPx = 10;
     let dpr = 1;
     let raf = 0;
@@ -50,43 +52,49 @@ export function AsciiAstronaut({ src, reduced }: { src: string; reduced: boolean
 
     const build = () => {
       const rect = box.getBoundingClientRect();
-      size = Math.floor(Math.min(rect.width, rect.height));
-      if (size < 40) return;
+      const fit = Math.floor(Math.min(rect.width, rect.height));
+      if (fit < 40) return;
+      // keep the picture's own aspect ratio inside the square box
+      const aspect = img.naturalWidth / Math.max(1, img.naturalHeight);
+      H = aspect <= 1 ? fit : Math.floor(fit / aspect);
+      W = aspect <= 1 ? Math.floor(fit * aspect) : fit;
+      size = H;
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      cellPx = size < 420 ? 6 : size < 640 ? 8 : 9;
-      el.width = size * dpr;
-      el.height = size * dpr;
-      el.style.width = `${size}px`;
-      el.style.height = `${size}px`;
+      cellPx = fit < 420 ? 6 : fit < 640 ? 7 : 8;
+      el.width = W * dpr;
+      el.height = H * dpr;
+      el.style.width = `${W}px`;
+      el.style.height = `${H}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const cols = Math.floor(size / cellPx);
+      const cols = Math.floor(W / cellPx);
+      const rows = Math.floor(H / cellPx);
       const off = document.createElement("canvas");
       off.width = cols;
-      off.height = cols;
+      off.height = rows;
       const octx = off.getContext("2d", { willReadFrequently: true });
       if (!octx) return;
-      octx.drawImage(img, 0, 0, cols, cols);
-      const data = octx.getImageData(0, 0, cols, cols).data;
+      octx.drawImage(img, 0, 0, cols, rows);
+      const data = octx.getImageData(0, 0, cols, rows).data;
 
       const buckets = new Map<string, number>();
       palette = [];
       cells = [];
-      for (let gy = 0; gy < cols; gy++) {
+      for (let gy = 0; gy < rows; gy++) {
         for (let gx = 0; gx < cols; gx++) {
           const i = (gy * cols + gx) * 4;
           const a = data[i + 3]! / 255;
-          if (a < 0.5) continue;
+          if (a < 0.12) continue; // soft edges fade out instead of a hard cut
           let r = data[i]!,
             g = data[i + 1]!,
             b = data[i + 2]!;
           const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-          // lift the darks so the figure reads on black (navy suit -> steel blue),
-          // keep the logo's orange/blue identity, then quantize for batching
-          const lift = 1.05 + (1 - lum) * 0.9;
-          r = Math.min(255, r * lift + 38);
-          g = Math.min(255, g * lift + 46);
-          b = Math.min(255, b * lift + 58);
+          // brighten so skin, beard and turban read on black; fade only at the soft edges
+          const k = Math.sqrt(a);
+          const lift = 1.4 + (1 - lum) * 1.1;
+          r = Math.min(255, (r * lift + 40) * k);
+          g = Math.min(255, (g * lift + 34) * k);
+          b = Math.min(255, (b * lift + 30) * k);
           const q = (v: number) => Math.round(v / 32) * 32;
           const key = `${q(r)},${q(g)},${q(b)}`;
           let bucket = buckets.get(key);
@@ -95,7 +103,7 @@ export function AsciiAstronaut({ src, reduced }: { src: string; reduced: boolean
             buckets.set(key, bucket);
             palette.push(`rgb(${key})`);
           }
-          const idx = 4 + Math.floor(lum * (RAMP.length - 4));
+          const idx = 5 + Math.floor(lum * (RAMP.length - 5));
           const ch = RAMP[Math.min(RAMP.length - 1, idx)] ?? "+";
           const hx = gx * cellPx + cellPx / 2;
           const hy = gy * cellPx + cellPx / 2;
@@ -156,7 +164,7 @@ export function AsciiAstronaut({ src, reduced }: { src: string; reduced: boolean
       const dt = Math.min(2, (now - last) / 16.67);
       last = now;
       const t = now / 1000;
-      ctx.clearRect(0, 0, size, size);
+      ctx.clearRect(0, 0, W, H);
       ctx.font = `${cellPx + 1}px "JetBrains Mono", ui-monospace, monospace`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";

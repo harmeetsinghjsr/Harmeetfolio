@@ -4,7 +4,7 @@ import Lenis from "lenis";
 import { profile, projects, alsoBuilt, experience, skills, alsoWorkedWith, about } from "@/content";
 import { useReduced } from "@/lib/motion";
 import { toggleIntro, useIntro } from "@/lib/sound";
-import { AsciiAstronaut } from "./AsciiAstronaut";
+import { AsciiPortrait } from "./AsciiPortrait";
 
 const BASE = import.meta.env.BASE_URL;
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -117,7 +117,7 @@ function Preloader({ onReveal, onFinish }: { onReveal: () => void; onFinish: () 
   if (reduced) return null;
   const lines = [
     "mounting harmeet.dev",
-    "loading astronaut.png",
+    "rendering portrait.jpg",
     "compiling 6 systems",
     "warming up the pipeline",
   ];
@@ -235,7 +235,7 @@ function Hero({ ready }: { ready: boolean }) {
   return (
     <section ref={ref} className="v2-hero" id="v2-top">
       <div className="v2-hero-art">
-        {ready && <AsciiAstronaut src={`${BASE}logo.png`} reduced={reduced} />}
+        {ready && <AsciiPortrait src={`${BASE}v2/portrait-ascii.png`} reduced={reduced} />}
       </div>
       <motion.div className="v2-hero-copy" style={{ y, opacity: fade }}>
         <div className="v2-kicker mono">
@@ -288,7 +288,7 @@ function Hero({ ready }: { ready: boolean }) {
       </motion.div>
       <motion.div className="v2-hero-foot mono" style={{ opacity: fade }}>
         <span>Software developer · AI · Automation · Cloud</span>
-        <span className="v2-hint">Move your cursor through the astronaut</span>
+        <span className="v2-hint">Move your cursor through the portrait</span>
         <span>Scroll ↓</span>
       </motion.div>
     </section>
@@ -598,7 +598,7 @@ function About() {
             loading="lazy"
           />
         </motion.div>
-        <span className="mono v2-about-cap">Chennai, 2026 — on the Cognizant floor</span>
+        <span className="mono v2-about-cap">The human behind the glyphs — Chennai, 2026</span>
       </div>
       <div className="v2-about-copy">
         <div className="v2-label mono">(04) — About</div>
