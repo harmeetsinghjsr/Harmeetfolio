@@ -1157,3 +1157,28 @@ html.v2-has-cursor .v2 * {
 .v2-ascii canvas {
   cursor: pointer;
 }
+
+/* soft warm glow behind the portrait so a dark turban still reads against black */
+.v2-ascii::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 78%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 106, 43, 0.22) 0%,
+    rgba(255, 106, 43, 0.09) 38%,
+    transparent 70%
+  );
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: 0;
+}
+.v2-ascii canvas {
+  position: relative;
+  z-index: 1;
+}
