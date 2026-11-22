@@ -53,7 +53,7 @@ export function AsciiAstronaut({ src, reduced }: { src: string; reduced: boolean
       size = Math.floor(Math.min(rect.width, rect.height));
       if (size < 40) return;
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      cellPx = size < 420 ? 7 : size < 640 ? 8 : 9;
+      cellPx = size < 420 ? 6 : size < 640 ? 8 : 9;
       el.width = size * dpr;
       el.height = size * dpr;
       el.style.width = `${size}px`;

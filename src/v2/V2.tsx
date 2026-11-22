@@ -81,7 +81,13 @@ function Preloader({ onReveal, onFinish }: { onReveal: () => void; onFinish: () 
   const [n, setN] = useState(0);
   const [leaving, setLeaving] = useState(false);
   useEffect(() => {
-    if (reduced) {
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem("v2-seen") === "1";
+    } catch {
+      /* storage blocked: show the preloader */
+    }
+    if (reduced || seen) {
       onReveal();
       onFinish();
       return;
@@ -97,6 +103,11 @@ function Preloader({ onReveal, onFinish }: { onReveal: () => void; onFinish: () 
       else {
         setLeaving(true);
         onReveal();
+        try {
+          sessionStorage.setItem("v2-seen", "1");
+        } catch {
+          /* ignore */
+        }
         setTimeout(onFinish, 950);
       }
     };
@@ -266,6 +277,14 @@ function Hero({ ready }: { ready: boolean }) {
             </motion.span>
           </span>
         </div>
+        <motion.div
+          className="v2-now mono"
+          initial={{ opacity: 0 }}
+          animate={ready ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 0.8, delay: 0.9 }}
+        >
+          <span>Currently</span> Software Developer Intern @ FixGenie — remote, Canada
+        </motion.div>
       </motion.div>
       <motion.div className="v2-hero-foot mono" style={{ opacity: fade }}>
         <span>Software developer · AI · Automation · Cloud</span>
@@ -348,6 +367,7 @@ function Work() {
 
   return (
     <section className="v2-work" id="v2-work">
+      <div className="v2-label mono">(02) — Work</div>
       <div className="v2-section-head">
         <h2 className="serif">
           <Line>
@@ -380,9 +400,16 @@ function Work() {
                 <span className="v2-row-arrow" aria-hidden>
                   ↗
                 </span>
-                {!fine && shots[p.title] && (
-                  <img className="v2-row-thumb" src={shots[p.title]} alt="" loading="lazy" />
-                )}
+                {!fine &&
+                  (shots[p.title] ? (
+                    <img className="v2-row-thumb" src={shots[p.title]} alt="" loading="lazy" />
+                  ) : (
+                    <span className="v2-row-thumb v2-preview-card" aria-hidden>
+                      <span className="mono">{p.category}</span>
+                      <strong className="serif">{p.title}</strong>
+                      <span className="mono">{p.tags.slice(0, 3).join(" · ")}</span>
+                    </span>
+                  ))}
               </a>
             </li>
           );
@@ -429,6 +456,7 @@ function Work() {
 function Experience() {
   return (
     <section className="v2-exp" id="v2-exp">
+      <div className="v2-label mono">(03) — Experience</div>
       <div className="v2-section-head">
         <h2 className="serif">
           <Line>
@@ -439,34 +467,58 @@ function Experience() {
       </div>
       <div className="v2-exp-list">
         {experience.map((e, i) => (
-          <motion.article
-            key={e.company}
-            className="v2-exp-item"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.9, delay: i * 0.05, ease: EASE }}
-          >
-            <div className="v2-exp-date mono">{e.dates}</div>
-            <div className="v2-exp-main">
-              <h3 className="serif">{e.role}</h3>
-              <div className="v2-exp-co">
-                {e.company}
-                {e.link && (
-                  <a href={e.link.href} target="_blank" rel="noreferrer" data-cursor="Visit">
-                    {" "}
-                    ↗ {e.link.label}
-                  </a>
-                )}
-                <span className="mono"> · {e.location}</span>
-              </div>
-              <p>{e.summary}</p>
-            </div>
-            <div className="v2-exp-tools mono">{e.tools.join(" / ")}</div>
-          </motion.article>
+          <ExpItem key={e.company} e={e} i={i} />
         ))}
       </div>
     </section>
+  );
+}
+
+function ExpItem({ e, i }: { e: (typeof experience)[number]; i: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <motion.article
+      className="v2-exp-item"
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.9, delay: i * 0.05, ease: EASE }}
+    >
+      <div className="v2-exp-date mono">
+        {e.dates}
+        <span className="v2-exp-impact">{e.impact}</span>
+      </div>
+      <div className="v2-exp-main">
+        <h3 className="serif">{e.role}</h3>
+        <div className="v2-exp-co">
+          {e.company}
+          {e.link && (
+            <a href={e.link.href} target="_blank" rel="noreferrer" data-cursor="Visit">
+              {" "}
+              ↗ {e.link.label}
+            </a>
+          )}
+          <span className="mono"> · {e.location}</span>
+        </div>
+        <p>{e.summary}</p>
+        <button
+          className="v2-exp-toggle mono"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          data-cursor={open ? "Close" : "Open"}
+        >
+          {open ? "Less −" : "Details +"}
+        </button>
+        <div className={`v2-exp-details ${open ? "is-open" : ""}`}>
+          <ul>
+            {e.bullets.map((b) => (
+              <li key={b}>{b}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div className="v2-exp-tools mono">{e.tools.join(" / ")}</div>
+    </motion.article>
   );
 }
 
