@@ -40,11 +40,12 @@ html.v2-locked body {
 .v2 *::after {
   box-sizing: border-box;
 }
-.v2 a {
+/* zero-specificity resets, so component classes (buttons, pills) always win */
+:where(.v2) a {
   color: inherit;
   text-decoration: none;
 }
-.v2 button {
+:where(.v2) button {
   font: inherit;
   color: inherit;
   background: none;
@@ -890,16 +891,6 @@ html.v2-has-cursor .v2 * {
 }
 .v2-foot-links a:hover {
   color: var(--orange);
-}
-.v2-giant {
-  font-size: 27.5vw;
-  line-height: 0.74;
-  letter-spacing: -0.05em;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(239, 233, 223, 0.14);
-  margin: 2vh 0 -2.5vw calc(var(--gutter) * -0.4);
-  white-space: nowrap;
-  user-select: none;
 }
 
 /* ---------------------------------------------------------- responsive */

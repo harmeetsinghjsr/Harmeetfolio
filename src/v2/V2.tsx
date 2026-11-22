@@ -758,9 +758,6 @@ function Contact() {
         <span>Jamshedpur · IST {clock}</span>
         <span>© 2026 Harmeet Singh</span>
       </footer>
-      <div className="v2-giant serif" aria-hidden>
-        Harmeet
-      </div>
     </section>
   );
 }

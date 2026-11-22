@@ -96,6 +96,16 @@ export function AsciiPortrait({
       octx.drawImage(img, 0, 0, cols, rows);
       const data = octx.getImageData(0, 0, cols, rows).data;
 
+      // measure the photo's own brightness so any portrait lands at a similar exposure
+      let sumL = 0,
+        nL = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3]! < 128) continue;
+        sumL += (0.299 * data[i]! + 0.587 * data[i + 1]! + 0.114 * data[i + 2]!) / 255;
+        nL++;
+      }
+      const meanL = nL ? sumL / nL : 0.5;
+      const gain = Math.max(0.75, Math.min(1.9, 0.6 / Math.max(0.05, meanL)));
       const buckets = new Map<string, number>();
       palette = [];
       cells = [];
@@ -110,10 +120,17 @@ export function AsciiPortrait({
           const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
           // brighten so skin, beard and turban read on black; fade only at the soft edges
           const k = Math.sqrt(a);
-          const lift = 1.4 + (1 - lum) * 1.1;
-          r = Math.min(255, (r * lift + 40) * k);
-          g = Math.min(255, (g * lift + 34) * k);
-          b = Math.min(255, (b * lift + 30) * k);
+          // boost saturation so the turban and jacket keep their colour as glyphs
+          const grey = lum * 255;
+          const sat = 1.35;
+          r = grey + (r - grey) * sat;
+          g = grey + (g - grey) * sat;
+          b = grey + (b - grey) * sat;
+          // exposure from the measured gain, with a little extra lift in the shadows
+          const lift = gain * (1 + (1 - lum) * 0.7);
+          r = Math.max(0, Math.min(255, (r * lift + 14) * k));
+          g = Math.max(0, Math.min(255, (g * lift + 12) * k));
+          b = Math.max(0, Math.min(255, (b * lift + 10) * k));
           const q = (v: number) => Math.round(v / 32) * 32;
           const key = `${q(r)},${q(g)},${q(b)}`;
           let bucket = buckets.get(key);
