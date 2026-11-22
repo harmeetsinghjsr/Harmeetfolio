@@ -234,7 +234,21 @@ function TopBar({ lenis }: { lenis: React.MutableRefObject<Lenis | null> }) {
 
 /* ---------------------------------------------------------------- hero */
 
-function Hero({ ready, lenis }: { ready: boolean; lenis: React.MutableRefObject<Lenis | null> }) {
+export type Portrait = { ascii: string; reveal: string };
+const DEFAULT_PORTRAIT: Portrait = {
+  ascii: `${BASE}v2/portrait-ascii.png`,
+  reveal: `${BASE}v2/portrait-reveal.webp`,
+};
+
+function Hero({
+  ready,
+  lenis,
+  portrait,
+}: {
+  ready: boolean;
+  lenis: React.MutableRefObject<Lenis | null>;
+  portrait: Portrait;
+}) {
   const reduced = useReduced();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
@@ -245,11 +259,7 @@ function Hero({ ready, lenis }: { ready: boolean; lenis: React.MutableRefObject<
     <section ref={ref} className="v2-hero" id="v2-top">
       <div className="v2-hero-art">
         {ready && (
-          <AsciiPortrait
-            src={`${BASE}v2/portrait-ascii.png`}
-            revealSrc={`${BASE}v2/portrait-reveal.webp`}
-            reduced={reduced}
-          />
+          <AsciiPortrait src={portrait.ascii} revealSrc={portrait.reveal} reduced={reduced} />
         )}
       </div>
       <motion.div className="v2-hero-copy" style={{ y, opacity: fade }}>
@@ -764,7 +774,7 @@ function Contact() {
 
 /* ---------------------------------------------------------------- page */
 
-export function V2() {
+export function V2({ portrait = DEFAULT_PORTRAIT }: { portrait?: Portrait } = {}) {
   const [ready, setReady] = useState(false);
   const [preGone, setPreGone] = useState(false);
   const lenis = useRef<Lenis | null>(null);
@@ -795,7 +805,7 @@ export function V2() {
       <div className="v2-grain" aria-hidden />
       <TopBar lenis={lenis} />
       <main>
-        <Hero ready={ready} lenis={lenis} />
+        <Hero ready={ready} lenis={lenis} portrait={portrait} />
         <Statement />
         <Work />
         <Experience />
