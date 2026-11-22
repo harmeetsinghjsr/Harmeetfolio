@@ -21,7 +21,15 @@ type Cell = {
   seed: number;
 };
 
-export function AsciiPortrait({ src, reduced }: { src: string; reduced: boolean }) {
+export function AsciiPortrait({
+  src,
+  revealSrc,
+  reduced,
+}: {
+  src: string;
+  revealSrc?: string;
+  reduced: boolean;
+}) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
 
@@ -48,9 +56,18 @@ export function AsciiPortrait({ src, reduced }: { src: string; reduced: boolean 
     let dissolve = 0;
     // x-ray lens: follows the pointer smoothly and opens only over the portrait
     const lens = { x: 0, y: 0, k: 0 };
+    // tap / click: the full photo opens from the tap point, holds, then re-codes
+    let reveal = { x: 0, y: 0, t: -1 };
+    const OPEN = 0.7,
+      HOLD = 2.6,
+      CLOSE = 0.8;
 
     const img = new Image();
     img.src = src;
+    // sharper image for the lens and the full reveal (falls back to the glyph source)
+    const photo = new Image();
+    photo.src = revealSrc ?? src;
+    const sharp = () => (photo.complete && photo.naturalWidth > 0 ? photo : img);
 
     const build = () => {
       const rect = box.getBoundingClientRect();
@@ -153,6 +170,7 @@ export function AsciiPortrait({ src, reduced }: { src: string; reduced: boolean 
     const onDown = (e: PointerEvent) => {
       const p = toLocal(e.clientX, e.clientY);
       ripple = { x: p.x, y: p.y, t: performance.now() };
+      reveal = { x: p.x, y: p.y, t: performance.now() };
     };
     const onScroll = () => {
       const r = box.getBoundingClientRect();
@@ -271,7 +289,7 @@ export function AsciiPortrait({ src, reduced }: { src: string; reduced: boolean 
           ctx.arc(lens.x, lens.y, r, 0, Math.PI * 2);
           ctx.clip();
           ctx.globalAlpha = alpha * lens.k;
-          ctx.drawImage(img, 0, 0, W, H);
+          ctx.drawImage(sharp(), 0, 0, W, H);
           ctx.restore();
           ctx.globalAlpha = alpha * lens.k * 0.9;
           ctx.strokeStyle = "#ff6a2b";
@@ -279,6 +297,39 @@ export function AsciiPortrait({ src, reduced }: { src: string; reduced: boolean 
           ctx.beginPath();
           ctx.arc(lens.x, lens.y, r, 0, Math.PI * 2);
           ctx.stroke();
+        }
+      }
+      if (reveal.t >= 0) {
+        // the frame clock can lag the tap by a few ms: never let age go negative
+        const age = Math.max(0, (now - reveal.t) / 1000);
+        let k: number;
+        if (reduced) k = age < HOLD ? 1 : 0;
+        else if (age < OPEN) k = 1 - Math.pow(1 - age / OPEN, 3);
+        else if (age < OPEN + HOLD) k = 1;
+        else if (age < OPEN + HOLD + CLOSE) k = 1 - Math.pow((age - OPEN - HOLD) / CLOSE, 2);
+        else k = 0;
+        if (age >= (reduced ? HOLD : OPEN + HOLD + CLOSE)) reveal.t = -1;
+        else if (k > 0) {
+          const maxR = Math.hypot(
+            Math.max(reveal.x, W - reveal.x),
+            Math.max(reveal.y, H - reveal.y),
+          );
+          const r = Math.max(1, k * maxR);
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(reveal.x, reveal.y, r, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.globalAlpha = 1;
+          ctx.drawImage(sharp(), 0, 0, W, H);
+          ctx.restore();
+          if (k < 1) {
+            ctx.globalAlpha = 0.9;
+            ctx.strokeStyle = "#ff6a2b";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(reveal.x, reveal.y, r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
         }
       }
       ctx.globalAlpha = 1;
@@ -328,7 +379,7 @@ export function AsciiPortrait({ src, reduced }: { src: string; reduced: boolean 
       el.removeEventListener("pointerdown", onDown);
       window.removeEventListener("scroll", onScroll);
     };
-  }, [src, reduced]);
+  }, [src, revealSrc, reduced]);
 
   return (
     <div ref={host} className="v2-ascii" aria-hidden>

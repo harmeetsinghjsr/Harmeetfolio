@@ -949,8 +949,11 @@ html.v2-has-cursor .v2 * {
   .v2-name {
     font-size: clamp(64px, 21vw, 120px);
   }
-  .v2-hero-foot .v2-hint {
+  .v2-hero-foot > span:first-child {
     display: none;
+  }
+  .v2-hint-touch {
+    color: var(--orange-soft);
   }
   .v2-row {
     grid-template-columns: 30px minmax(0, 1fr) 22px;
@@ -1146,4 +1149,20 @@ html.v2-has-cursor .v2 * {
   .v2-cta {
     margin-top: 26px;
   }
+}
+
+/* reveal hint: wording per input type, and keep it visible on phones */
+.v2-hint-touch {
+  display: none;
+}
+@media (hover: none), (pointer: coarse) {
+  .v2-hint-fine {
+    display: none;
+  }
+  .v2-hint-touch {
+    display: inline;
+  }
+}
+.v2-ascii canvas {
+  cursor: pointer;
 }

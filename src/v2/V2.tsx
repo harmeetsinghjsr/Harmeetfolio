@@ -244,7 +244,13 @@ function Hero({ ready, lenis }: { ready: boolean; lenis: React.MutableRefObject<
   return (
     <section ref={ref} className="v2-hero" id="v2-top">
       <div className="v2-hero-art">
-        {ready && <AsciiPortrait src={`${BASE}v2/portrait-ascii.png`} reduced={reduced} />}
+        {ready && (
+          <AsciiPortrait
+            src={`${BASE}v2/portrait-ascii.png`}
+            revealSrc={`${BASE}v2/portrait-reveal.webp`}
+            reduced={reduced}
+          />
+        )}
       </div>
       <motion.div className="v2-hero-copy" style={{ y, opacity: fade }}>
         <div className="v2-kicker mono">
@@ -325,7 +331,8 @@ function Hero({ ready, lenis }: { ready: boolean; lenis: React.MutableRefObject<
       </motion.div>
       <motion.div className="v2-hero-foot mono" style={{ opacity: fade }}>
         <span>Software developer · AI · Automation · Cloud</span>
-        <span className="v2-hint">Move your cursor through the portrait</span>
+        <span className="v2-hint v2-hint-fine">Hover the portrait · click to reveal</span>
+        <span className="v2-hint v2-hint-touch">Tap the portrait to reveal me</span>
         <span>Scroll ↓</span>
       </motion.div>
     </section>
