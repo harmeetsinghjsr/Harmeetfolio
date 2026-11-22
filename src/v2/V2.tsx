@@ -153,7 +153,7 @@ function Cursor() {
     const move = (e: PointerEvent) => {
       m.x = e.clientX;
       m.y = e.clientY;
-      const t = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-cursor]");
+      const t = e.target instanceof Element ? e.target.closest<HTMLElement>("[data-cursor]") : null;
       setLabel(t?.dataset["cursor"] ?? "");
     };
     const loop = () => {
@@ -218,6 +218,15 @@ function TopBar({ lenis }: { lenis: React.MutableRefObject<Lenis | null> }) {
           </button>
         )}
         <span className="v2-clock">IST {clock}</span>
+        <a
+          className="v2-cv"
+          href={profile.resume}
+          target="_blank"
+          rel="noreferrer"
+          data-cursor="Open"
+        >
+          Résumé ↗
+        </a>
       </div>
     </header>
   );
@@ -225,7 +234,7 @@ function TopBar({ lenis }: { lenis: React.MutableRefObject<Lenis | null> }) {
 
 /* ---------------------------------------------------------------- hero */
 
-function Hero({ ready }: { ready: boolean }) {
+function Hero({ ready, lenis }: { ready: boolean; lenis: React.MutableRefObject<Lenis | null> }) {
   const reduced = useReduced();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
@@ -277,6 +286,34 @@ function Hero({ ready }: { ready: boolean }) {
             </motion.span>
           </span>
         </div>
+        <motion.div
+          className="v2-cta"
+          initial={{ opacity: 0, y: 16 }}
+          animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+          transition={{ duration: 0.9, delay: 0.7, ease: EASE }}
+        >
+          <button
+            className="v2-btn v2-btn-solid"
+            data-cursor="Go"
+            onClick={() => {
+              const el = document.getElementById("v2-work");
+              if (!el) return;
+              if (lenis.current) lenis.current.scrollTo(el, { offset: -40 });
+              else el.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            See my work <span aria-hidden>↓</span>
+          </button>
+          <a
+            className="v2-btn"
+            href={profile.resume}
+            target="_blank"
+            rel="noreferrer"
+            data-cursor="Open"
+          >
+            View résumé <span aria-hidden>↗</span>
+          </a>
+        </motion.div>
         <motion.div
           className="v2-now mono"
           initial={{ opacity: 0 }}
@@ -754,7 +791,7 @@ export function V2() {
       <div className="v2-grain" aria-hidden />
       <TopBar lenis={lenis} />
       <main>
-        <Hero ready={ready} />
+        <Hero ready={ready} lenis={lenis} />
         <Statement />
         <Work />
         <Experience />

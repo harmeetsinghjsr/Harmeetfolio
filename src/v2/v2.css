@@ -1088,3 +1088,62 @@ html.v2-has-cursor .v2 * {
 .v2-row-thumb.v2-preview-card strong {
   font-size: 40px;
 }
+
+/* ---------------------------------------------------------- résumé + hero CTAs */
+.v2-cv {
+  padding: 7px 14px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  transition:
+    background 0.3s,
+    color 0.3s;
+}
+.v2-cv:hover {
+  background: #fff;
+  color: #000;
+}
+.v2-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 34px;
+}
+.v2-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--bone);
+  transition:
+    border-color 0.3s,
+    background 0.3s,
+    color 0.3s,
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.v2-btn:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+  transform: translateY(-2px);
+}
+.v2-btn-solid {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: var(--ink);
+}
+.v2-btn-solid:hover {
+  background: var(--orange-soft);
+  color: var(--ink);
+}
+@media (max-width: 767px) {
+  .v2-clock {
+    display: none;
+  }
+  .v2-cta {
+    margin-top: 26px;
+  }
+}
