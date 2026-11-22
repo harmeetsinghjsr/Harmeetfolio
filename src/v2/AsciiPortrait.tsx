@@ -46,6 +46,8 @@ export function AsciiPortrait({ src, reduced }: { src: string; reduced: boolean 
     const pointer = { x: -9999, y: -9999, active: 0, down: 0 };
     let ripple = { x: 0, y: 0, t: -1 };
     let dissolve = 0;
+    // x-ray lens: follows the pointer smoothly and opens only over the portrait
+    const lens = { x: 0, y: 0, k: 0 };
 
     const img = new Image();
     img.src = src;
@@ -60,7 +62,7 @@ export function AsciiPortrait({ src, reduced }: { src: string; reduced: boolean 
       W = aspect <= 1 ? Math.floor(fit * aspect) : fit;
       size = H;
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      cellPx = fit < 420 ? 6 : fit < 640 ? 7 : 8;
+      cellPx = fit < 420 ? 5 : fit < 640 ? 6 : 7;
       el.width = W * dpr;
       el.height = H * dpr;
       el.style.width = `${W}px`;
@@ -241,6 +243,43 @@ export function AsciiPortrait({ src, reduced }: { src: string; reduced: boolean 
         if (c.heat <= 0.35) continue;
         ctx.globalAlpha = alpha * Math.min(1, c.heat * 1.4);
         ctx.fillText(c.ch, c.x, c.y);
+      }
+
+      if (!reduced) {
+        // scan line: a slow light sweep down the portrait every ~7s
+        const sweep = ((t % 7) / 7) * 1.35 - 0.15;
+        const bandY = sweep * H;
+        const bandH = cellPx * 2.2;
+        ctx.fillStyle = "#fff4e2";
+        for (const c of cells) {
+          const d = Math.abs(c.hy - bandY);
+          if (d > bandH) continue;
+          ctx.globalAlpha = alpha * (1 - d / bandH) * 0.85;
+          ctx.fillText(c.ch, c.x, c.y);
+        }
+
+        // x-ray lens: the code parts and the real photo shows underneath
+        const inside =
+          pointer.active === 1 && pointer.x > 0 && pointer.y > 0 && pointer.x < W && pointer.y < H;
+        lens.k += ((inside ? 1 : 0) - lens.k) * 0.12 * dt;
+        lens.x += (pointer.x - lens.x) * 0.25 * dt;
+        lens.y += (pointer.y - lens.y) * 0.25 * dt;
+        if (lens.k > 0.02 && dissolve < 0.6) {
+          const r = size * 0.13 * lens.k;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(lens.x, lens.y, r, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.globalAlpha = alpha * lens.k;
+          ctx.drawImage(img, 0, 0, W, H);
+          ctx.restore();
+          ctx.globalAlpha = alpha * lens.k * 0.9;
+          ctx.strokeStyle = "#ff6a2b";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(lens.x, lens.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
       }
       ctx.globalAlpha = 1;
     };
