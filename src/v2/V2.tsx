@@ -234,11 +234,12 @@ function TopBar({ lenis }: { lenis: React.MutableRefObject<Lenis | null> }) {
 
 /* ---------------------------------------------------------------- hero */
 
-export type Portrait = { ascii: string; reveal: string };
-const DEFAULT_PORTRAIT: Portrait = {
-  ascii: `${BASE}v2/portrait-ascii.png`,
-  reveal: `${BASE}v2/portrait-reveal.webp`,
-};
+type Portrait = { ascii: string; reveal: string };
+// Hero photos: one is picked at random on every visit.
+const PORTRAITS: Portrait[] = [
+  { ascii: `${BASE}v2/portrait-ascii.png`, reveal: `${BASE}v2/portrait-reveal.webp` }, // bridge selfie
+  { ascii: `${BASE}v2/portrait-alt-ascii.png`, reveal: `${BASE}v2/portrait-alt-reveal.webp` }, // river
+];
 
 function Hero({
   ready,
@@ -247,7 +248,7 @@ function Hero({
 }: {
   ready: boolean;
   lenis: React.MutableRefObject<Lenis | null>;
-  portrait: Portrait;
+  portrait: Portrait | null;
 }) {
   const reduced = useReduced();
   const ref = useRef<HTMLElement>(null);
@@ -258,8 +259,13 @@ function Hero({
   return (
     <section ref={ref} className="v2-hero" id="v2-top">
       <div className="v2-hero-art">
-        {ready && (
-          <AsciiPortrait src={portrait.ascii} revealSrc={portrait.reveal} reduced={reduced} />
+        {ready && portrait && (
+          <AsciiPortrait
+            key={portrait.ascii}
+            src={portrait.ascii}
+            revealSrc={portrait.reveal}
+            reduced={reduced}
+          />
         )}
       </div>
       <motion.div className="v2-hero-copy" style={{ y, opacity: fade }}>
@@ -774,8 +780,13 @@ function Contact() {
 
 /* ---------------------------------------------------------------- page */
 
-export function V2({ portrait = DEFAULT_PORTRAIT }: { portrait?: Portrait } = {}) {
+export function V2() {
   const [ready, setReady] = useState(false);
+  // chosen on the client after load, so the prerendered HTML stays identical for everyone
+  const [portrait, setPortrait] = useState<Portrait | null>(null);
+  useEffect(() => {
+    setPortrait(PORTRAITS[Math.floor(Math.random() * PORTRAITS.length)] ?? PORTRAITS[0] ?? null);
+  }, []);
   const [preGone, setPreGone] = useState(false);
   const lenis = useRef<Lenis | null>(null);
   const reduced = useReduced();
