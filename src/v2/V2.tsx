@@ -13,6 +13,7 @@ const shots: Record<string, string> = {
   Resonance: `${BASE}v2/resonance-app.jpg`,
   Harmflix: `${BASE}v2/harmflix.jpg`,
   HarCoin: `${BASE}v2/harcoin.jpg`,
+  "BST Visualizer": `${BASE}v2/bstv.jpg`,
 };
 
 /* ---------------------------------------------------------------- helpers */

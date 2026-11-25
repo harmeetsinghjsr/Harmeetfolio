@@ -71,14 +71,6 @@ export const projects: Project[] = [
       "Natural-language prompt → OpenAI intent → ethers.js read → wallet-aware response",
   },
   {
-    title: "Spam Email Detection Bot",
-    category: "Machine Learning",
-    description:
-      "A supervised classifier comparing SVM and Logistic Regression on TF-IDF features, reaching about 96% accuracy on held-out data, wrapped in a desktop GUI for real-time checks.",
-    tags: ["Python", "scikit-learn", "Pandas", "Tkinter"],
-    code: "https://github.com/harmeetsinghjsr/CN127",
-  },
-  {
     title: "HarCoin",
     category: "Web3",
     description:
@@ -95,15 +87,23 @@ export const projects: Project[] = [
     live: "https://harmflix.netlify.app",
     code: "https://github.com/harmeetsinghjsr/hahafirst",
   },
+  {
+    title: "BST Visualizer",
+    category: "Data Structures · Visualization",
+    description:
+      "An interactive binary search tree in the browser: add, search and delete nodes and watch the tree update. Also rebuilt as an R/Shiny app.",
+    tags: ["JavaScript", "HTML", "CSS", "R + Shiny"],
+    live: "https://bstv.netlify.app",
+    code: "https://github.com/harmeetsinghjsr/BSTV",
+  },
 ];
 
 export const alsoBuilt: { title: string; description: string; live?: string; code?: string }[] = [
   {
-    title: "BST Visualizer",
+    title: "Spam Email Detection Bot",
     description:
-      "interactive binary-search-tree operations in JavaScript, plus an R/Shiny version.",
-    live: "https://bstv.netlify.app",
-    code: "https://github.com/harmeetsinghjsr/BSTV",
+      "SVM vs Logistic Regression on TF-IDF features, about 96% accuracy, with a desktop GUI for real-time checks.",
+    code: "https://github.com/harmeetsinghjsr/CN127",
   },
   {
     title: "Health Analytics Dashboards for India",
