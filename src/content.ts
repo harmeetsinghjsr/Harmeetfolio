@@ -108,7 +108,6 @@ export const alsoBuilt: { title: string; description: string; live?: string; cod
   {
     title: "Health Analytics Dashboards for India",
     description: "R + Shiny dashboards covering 28+ states and 1,000+ data points.",
-    code: "https://github.com/harmeetsinghjsr/RetailSalesDashboard",
   },
   {
     title: "Retail Sales Dashboard",
