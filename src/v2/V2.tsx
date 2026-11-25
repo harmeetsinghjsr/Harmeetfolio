@@ -396,7 +396,11 @@ function Statement() {
 function Work() {
   const preview = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<number | null>(null);
-  const fine = useMemo(() => isFinePointer(), []);
+  // touch screens: tapping a project expands its details instead of leaving the site
+  const [open, setOpen] = useState<number | null>(null);
+  // decided after mount so the prerendered HTML matches what the client first renders
+  const [fine, setFine] = useState(false);
+  useEffect(() => setFine(isFinePointer()), []);
 
   useEffect(() => {
     if (!fine) return;
@@ -439,6 +443,66 @@ function Work() {
       <ul className="v2-rows" onPointerLeave={() => setActive(null)}>
         {projects.map((p, i) => {
           const href = p.live ?? p.code;
+          if (!fine) {
+            const isOpen = open === i;
+            return (
+              <li key={p.title} className={`v2-trow ${isOpen ? "is-open" : ""}`}>
+                <button
+                  className="v2-row"
+                  aria-expanded={isOpen}
+                  aria-controls={`v2-proj-${i}`}
+                  onClick={() => setOpen(isOpen ? null : i)}
+                >
+                  <span className="mono v2-row-i">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="serif v2-row-title">{p.title}</span>
+                  <span className="v2-row-arrow" aria-hidden>
+                    +
+                  </span>
+                </button>
+                <div className="v2-tpanel" id={`v2-proj-${i}`} role="region" aria-label={p.title}>
+                  <div className="v2-tpanel-inner">
+                    {shots[p.title] ? (
+                      <img className="v2-row-thumb" src={shots[p.title]} alt="" loading="lazy" />
+                    ) : (
+                      <span className="v2-row-thumb v2-preview-card" aria-hidden>
+                        <span className="mono">{p.category}</span>
+                        <strong className="serif">{p.title}</strong>
+                        <span className="mono">{p.tags.slice(0, 3).join(" · ")}</span>
+                      </span>
+                    )}
+                    <div className="v2-tmeta mono">
+                      {p.category} · {year(i)}
+                    </div>
+                    <p className="v2-tdesc">{p.description}</p>
+                    <ul className="v2-ttags" aria-label="Built with">
+                      {p.tags.map((t) => (
+                        <li key={t} className="mono">
+                          {t}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="v2-tlinks">
+                      {p.live && (
+                        <a
+                          className="v2-btn v2-btn-solid"
+                          href={p.live}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Live <span aria-hidden>↗</span>
+                        </a>
+                      )}
+                      {p.code && (
+                        <a className="v2-btn" href={p.code} target="_blank" rel="noreferrer">
+                          Code <span aria-hidden>↗</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            );
+          }
           return (
             <li key={p.title}>
               <a
@@ -460,16 +524,6 @@ function Work() {
                 <span className="v2-row-arrow" aria-hidden>
                   ↗
                 </span>
-                {!fine &&
-                  (shots[p.title] ? (
-                    <img className="v2-row-thumb" src={shots[p.title]} alt="" loading="lazy" />
-                  ) : (
-                    <span className="v2-row-thumb v2-preview-card" aria-hidden>
-                      <span className="mono">{p.category}</span>
-                      <strong className="serif">{p.title}</strong>
-                      <span className="mono">{p.tags.slice(0, 3).join(" · ")}</span>
-                    </span>
-                  ))}
               </a>
             </li>
           );
