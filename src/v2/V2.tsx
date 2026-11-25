@@ -225,7 +225,7 @@ function TopBar({ lenis }: { lenis: React.MutableRefObject<Lenis | null> }) {
           rel="noreferrer"
           data-cursor="Open"
         >
-          Résumé ↗
+          Resume ↗
         </a>
       </div>
     </header>
@@ -333,7 +333,7 @@ function Hero({
             rel="noreferrer"
             data-cursor="Open"
           >
-            View résumé <span aria-hidden>↗</span>
+            View resume <span aria-hidden>↗</span>
           </a>
         </motion.div>
         <motion.div
@@ -459,17 +459,24 @@ function Work() {
                     +
                   </span>
                 </button>
+                <button
+                  className="v2-tthumb"
+                  tabIndex={-1}
+                  aria-hidden
+                  onClick={() => setOpen(isOpen ? null : i)}
+                >
+                  {shots[p.title] ? (
+                    <img className="v2-row-thumb" src={shots[p.title]} alt="" loading="lazy" />
+                  ) : (
+                    <span className="v2-row-thumb v2-preview-card">
+                      <span className="mono">{p.category}</span>
+                      <strong className="serif">{p.title}</strong>
+                      <span className="mono">{p.tags.slice(0, 3).join(" · ")}</span>
+                    </span>
+                  )}
+                </button>
                 <div className="v2-tpanel" id={`v2-proj-${i}`} role="region" aria-label={p.title}>
                   <div className="v2-tpanel-inner">
-                    {shots[p.title] ? (
-                      <img className="v2-row-thumb" src={shots[p.title]} alt="" loading="lazy" />
-                    ) : (
-                      <span className="v2-row-thumb v2-preview-card" aria-hidden>
-                        <span className="mono">{p.category}</span>
-                        <strong className="serif">{p.title}</strong>
-                        <span className="mono">{p.tags.slice(0, 3).join(" · ")}</span>
-                      </span>
-                    )}
                     <div className="v2-tmeta mono">
                       {p.category} · {year(i)}
                     </div>
@@ -822,7 +829,7 @@ function Contact() {
             LinkedIn ↗
           </a>
           <a href={profile.resume} target="_blank" rel="noreferrer" data-cursor="Open">
-            Résumé ↗
+            Resume ↗
           </a>
         </div>
         <span>Jamshedpur · IST {clock}</span>

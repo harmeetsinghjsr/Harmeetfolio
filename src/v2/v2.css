@@ -86,8 +86,9 @@ html.v2-locked body {
 .v2-line {
   display: block;
   overflow: hidden;
-  padding-bottom: 0.08em;
-  margin-bottom: -0.08em;
+  /* room for descenders (g, y, p) and italic overhang, without changing the spacing */
+  padding: 0 0.12em 0.24em 0;
+  margin: 0 -0.12em -0.24em 0;
 }
 .v2-line-inner {
   display: block;
@@ -1262,4 +1263,19 @@ html.v2-has-cursor .v2 * {
   .v2-trow .v2-row {
     grid-template-columns: 30px minmax(0, 1fr) 24px;
   }
+}
+
+/* touch: project image stays visible in the list; tap it or the row to open details */
+.v2-tthumb {
+  display: block;
+  width: 100%;
+  padding: 0 0 22px;
+  border-bottom: 1px solid var(--line);
+}
+.v2-trow.is-open .v2-tthumb {
+  padding-bottom: 16px;
+  border-bottom: 0;
+}
+.v2-trow .v2-row {
+  border-bottom: 0;
 }
