@@ -898,8 +898,12 @@ html.v2-has-cursor .v2 * {
   .v2-row {
     grid-template-columns: 40px minmax(0, 1fr) 130px 24px;
   }
+  /* narrow mouse windows: keep the description, tucked under the title */
   .v2-row-desc {
-    display: none;
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: -10px;
+    max-width: 52ch;
   }
   .v2-exp-item {
     grid-template-columns: 170px minmax(0, 1fr);
