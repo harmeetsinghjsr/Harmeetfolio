@@ -24,6 +24,7 @@ export type Project = {
   live?: string;
   code?: string;
   featured?: boolean;
+  year?: string;
   role?: string;
   problem?: string;
   solution?: string;
@@ -60,15 +61,17 @@ export const projects: Project[] = [
       "S3 static app → API Gateway → Lambda → public URL response · CloudWatch telemetry",
   },
   {
-    title: "MetaMask AI Query Interface",
+    title: "Chainwise",
     category: "AI · Web3",
+    year: "2026",
     description:
-      "Ask an Ethereum wallet questions in plain English. The OpenAI API interprets the question and routes it to the right read (balance or recent transactions) through ethers.js on the Sepolia testnet.",
-    tags: ["React", "ethers.js", "OpenAI API", "MetaMask"],
-    code: "https://github.com/harmeetsinghjsr/metamask-ai-agent",
-    role: "AI interface · Web3 integration",
+      "A multichain crypto dashboard with an AI copilot. It merges balances across Ethereum, Base, BNB Chain, Polygon, Arbitrum and Optimism into one net worth, and a Claude-powered Copilot answers questions about your wallet from live balances. Sign-In with Ethereum, Pro plans paid in USDC and verified on-chain, and a browser extension that checks transactions before you sign is in progress.",
+    tags: ["Next.js", "TypeScript", "ethers.js", "Claude API", "Upstash Redis"],
+    live: "https://getchainwise.vercel.app",
+    code: "https://github.com/harmeetsinghjsr/chainwise",
+    role: "Product engineering · Web3 + AI",
     architecture:
-      "Natural-language prompt → OpenAI intent → ethers.js read → wallet-aware response",
+      "Next.js API routes → ethers + Multicall3 across 6 chains → Claude copilot · SIWE sessions · Upstash Redis",
   },
   {
     title: "HarCoin",
@@ -226,7 +229,7 @@ export const skills = [
     title: "Cloud & Testing",
     description: "Serverless on AWS, tested and monitored.",
     signal: "RELIABILITY",
-    relatedProjects: ["Cloud Browser", "MetaMask AI Query Interface"],
+    relatedProjects: ["Cloud Browser", "Chainwise"],
     relatedExperience: "Cognizant Technology Solutions",
     items: [
       "AWS Lambda",

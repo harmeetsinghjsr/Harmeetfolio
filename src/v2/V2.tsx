@@ -12,6 +12,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 const shots: Record<string, string> = {
   Resonance: `${BASE}v2/resonance-app.jpg`,
   Harmflix: `${BASE}v2/harmflix.jpg`,
+  Chainwise: `${BASE}v2/chainwise.jpg`,
   HarCoin: `${BASE}v2/harcoin.jpg`,
   "BST Visualizer": `${BASE}v2/bstv.jpg`,
 };
@@ -428,7 +429,8 @@ function Work() {
     };
   }, [fine]);
 
-  const year = (i: number) => (i === 0 ? "2026" : i < 3 ? "2025" : "2024");
+  // projects can state their own year; otherwise fall back to list position
+  const year = (i: number) => projects[i]?.year ?? (i === 0 ? "2026" : i < 3 ? "2025" : "2024");
 
   return (
     <section className="v2-work" id="v2-work">
